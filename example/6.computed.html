@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reactive</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+    <script>
+    const { ref, computed } = vueReactivity;
+
+    let age = ref(10);
+
+    let myAge = computed(() => {
+      console.log('缓存机制');
+      return age.value + 10;
+    });
+
+    console.log(333, myAge.value);
+    console.log(333, myAge.value);
+
+    setTimeout(() => {
+      age.value = 20; //如果没有使用 不会执行
+
+      console.log(444, myAge.value);
+    }, 1000);
+
+    let myAge1 = computed({
+      get: () => {
+        return age.value + 10;
+      },
+      set: (value) => {
+        return (age.value = value);
+      },
+    });
+
+    myAge1.value = 50;
+
+    console.log(44455, myAge1.value);
+    </script>
+
+  </body>
+</html>

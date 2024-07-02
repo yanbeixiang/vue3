@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reactive</title>
+  </head>
+  <body>
+    <div id="app">test</div>
+    <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+    <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+    <script>
+      let { createApp, h } = vueRuntimeDom;
+      const { reactive } = vueReactivity;
+
+      let App = {
+        setup(){
+          const user = reactive({name: 'zs', age: 20});
+
+          return {user}
+        },
+        render() {
+          // return h('div', {style: {color: 'red'} });
+        }
+      }
+
+      createApp(App).mount('#app');
+
+      //总结：渲染初始化 1:runtime-dom 2. runtime-core
+      //1. 创建createApp方法 =》 runtime-dom 但是渲染组件 （不同平台）
+      //2. 组件的初始化 vNode =》if 第一次 或者 比对 =》
+    </script>
+
+  </body>
+</html>

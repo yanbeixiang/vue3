@@ -1,0 +1,13 @@
+{
+  "name": "@vue/runtime-dom",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "buildOptions": {
+    "name": "vueRuntimeDom",
+    "formats": [
+      "esm-builder",
+      "global"
+    ]
+  } 
+}
