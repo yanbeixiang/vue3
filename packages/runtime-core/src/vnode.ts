@@ -25,6 +25,7 @@ export function createVNode(type: any, props: Record<string, any>, children: any
     children,  
     key: props && props.key,//diff 会用到
     el: null,// 和真实的dom和vNode对应
+    component: {},
     shapeFlag,
   }
 

@@ -14,8 +14,10 @@
       const { reactive } = vueReactivity;
 
       let App = {
-        setup(){
+        setup(props, context){
           const user = reactive({name: 'zs', age: 20});
+          
+          console.log('setup', props, context)
 
           return {user}
         },
@@ -24,7 +26,7 @@
         }
       }
 
-      createApp(App).mount('#app');
+      createApp(App, {name: 'zs'}).mount('#app');
 
       //总结：渲染初始化 1:runtime-dom 2. runtime-core
       //1. 创建createApp方法 =》 runtime-dom 但是渲染组件 （不同平台）
