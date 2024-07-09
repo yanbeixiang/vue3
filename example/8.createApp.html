@@ -8,10 +8,8 @@
   <body>
     <div id="app">test</div>
     <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
-    <script src="../packages/reactivity/dist/reactivity.global.js"></script>
     <script>
-      let { createApp, h } = vueRuntimeDom;
-      const { reactive } = vueReactivity;
+      let { createApp, h, reactive } = vueRuntimeDom;
 
       let App = {
         setup(props, context){
