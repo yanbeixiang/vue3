@@ -6,23 +6,23 @@
 import { isArray, isFunction, isObject, isString, } from "@vue/shared";
 import { ShapeFlags } from "@vue/shared";
 
-export function createVNode(type: any, props: Record<string, any>, children: any = null) {
-  
+export function createVNode(type: any, props: Record<string, any> | null = null, children: any = null) {
+
   //区分 是组件还是元素
 
-  const shapeFlag= isString(type)
+  const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
     : isObject(type)
-    ? ShapeFlags.STATEFUL_COMPONENT
-    : isFunction(type)
-    ? ShapeFlags.FUNCTIONAL_COMPONENT
-    : 0;
+      ? ShapeFlags.STATEFUL_COMPONENT
+      : isFunction(type)
+        ? ShapeFlags.FUNCTIONAL_COMPONENT
+        : 0;
 
   const vNode = {
     _v_isVNode: true, //是一个vNode节点
     type,
     props,
-    children,  
+    children,
     key: props && props.key,//diff 会用到
     el: null,// 和真实的dom和vNode对应
     component: {},
@@ -49,4 +49,21 @@ function normalizeChildren(vNode: any, children?: any) {
   }
 
   vNode.shapeFlag = vNode.shapeFlag | type;
+}
+
+export function isVNode(vNode: any) {
+  return vNode._v_isVNode;
+}
+
+
+//元素的children变成vNode
+export const TEXT = Symbol('text');
+
+export function CVNode(child: any) {
+  //['text'] [h()]
+  if (isObject(child)) {
+    return child;
+  }
+
+  return createVNode(TEXT, null, String(child));
 }

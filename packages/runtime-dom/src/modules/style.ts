@@ -18,7 +18,7 @@ export function patchStyle(el: HTMLBaseElement, prev: CSSStyleDeclaration, next:
   }
 
   //新的有 老的没有
-  if (prev) {
+  if (next) {
     for (let key in next) {
       style[key] = next[key];
     }

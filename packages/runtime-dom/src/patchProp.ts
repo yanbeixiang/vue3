@@ -15,7 +15,7 @@ export function patchProps(el: HTMLBaseElement, key: string, preValue: any, next
 
     case 'style':
       patchStyle(el, preValue, nextValue);
-      break; 
+      break;
 
     default:
       if (isOn(key)) { //是不是事件 onClick

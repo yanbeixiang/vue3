@@ -19,14 +19,24 @@
           
           console.log('setup', props, context)
 
-          return {user}
+          function changeName() {
+            user.name='Alisa'
+          }
+
+          // return {
+          //   user
+          // };
+
+          return () => h('div', {style: {color: 'red'}, onClick: changeName }, ['hello ', user.name]);
         },
-        render() {
-          // return h('div', {style: {color: 'red'} });
+        render(proxy) {
+          console.log('render', proxy, this);
+
+          return h('div', {style: {color: 'red'} }, ['hello  ', proxy.user.name, h('div', {style: {color: 'black'}}, 'haha')]);
         }
       }
 
-      createApp(App, {name: 'zs'}).mount('#app');
+      createApp(App, {name: 'init-zs'}).mount('#app');
 
       //总结：渲染初始化 1:runtime-dom 2. runtime-core
       //1. 创建createApp方法 =》 runtime-dom 但是渲染组件 （不同平台）

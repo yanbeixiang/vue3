@@ -12,7 +12,7 @@ export const nodeOps = {
       parentNode.removeChild(child);
     }
   },
-  inset(child: Element, parent: Element, ancher = null) {
+  insert(child: Element, parent: Element, ancher = null) {
     parent.insertBefore(child, ancher); //ancher = null 相当于 appendchild
   },
   querySelector(select: string) {
@@ -23,7 +23,7 @@ export const nodeOps = {
   },
   //文本
   createText(text: string) {
-    document.createTextNode(text);
+    return document.createTextNode(text);
   },
   setText(node: Element, text: string) {
     node.nodeValue = text;

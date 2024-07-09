@@ -15,7 +15,7 @@ export const createApp = (rootComponent: any, rootProps: Record<string, any>) =>
   const app: any = createRenderer(renderOptionDom).createApp(rootComponent, rootProps);
   const { mount } = app;
 
-  app.mount = function(container: string) {
+  app.mount = function (container: string) {
     //挂载组件
     //清空容器的内容
 
@@ -28,8 +28,10 @@ export const createApp = (rootComponent: any, rootProps: Record<string, any>) =>
     containerEle.innerHTML = '';
 
     //将组件渲染的dom元素进行挂载
-    mount(container);
+    mount(containerEle);
   }
 
   return app;
 }
+
+export * from '@vue/runtime-core';
