@@ -2,7 +2,6 @@ import { ShapeFlags } from "@vue/shared";
 import { apiCreateApp } from "./apiCreateApp";
 import { createComponentInstance, setupComponent } from "./component";
 import { effect } from "packages/reactivity/src";
-import { h } from "./h";
 import { CVNode, TEXT } from "./vnode";
 
 export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vnode => render
@@ -24,7 +23,7 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
       // 判断第一次加载
       if (!instance.isMounted) {
         const proxy = instance.proxy;
-        let subTree = instance.render.call(proxy, proxy); //执行render
+        let subTree = instance.subTree = instance.render.call(proxy, proxy); //执行render
         //渲染子树
         patch(null, subTree, container); //组件渲染的结点 => 渲染到页面中
 
@@ -35,6 +34,12 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
 
       //TODO: 更新
       console.log('更新');
+      //比对旧和新
+      const proxy = instance.proxy;
+      const prevTree = instance.subTree;
+      const nextTree = instance.render.call(proxy, proxy);
+      instance.subTree = nextTree;
+      patch(prevTree, nextTree, container);
     })
   }
 
@@ -84,11 +89,11 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     })
   }
 
-  const mountElement = (initialVNode: any, container: any) => {
+  const mountElement = (vNode: any, container: any) => {
     // 递归 渲染 h('div', {}, [h('div)]) => dom操作 => 放到对应位置
-    const { props, shapeFlag, type, children } = initialVNode;
+    const { props, shapeFlag, type, children } = vNode;
     //创建真实元素
-    const el = hostCreateElement(type);
+    const el = vNode.el = hostCreateElement(type);
     //添加属性
     if (props) {
       Object.entries(props).forEach(([key, value]) => hostPatchProps(el, key, null, value))
@@ -109,6 +114,41 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     hostInsert(el, container);
   };
 
+  function patchProps(el: any, oldProps: any, newProps: any) {
+    if (oldProps === newProps) {
+      return;
+    }
+
+    //新的有，旧得也有，或新的有，旧的没有
+    Object.entries(newProps).forEach(([key, next]: [any, any]) => {
+      const prev = oldProps[key];
+
+      if (prev === next) {
+        return;
+      }
+
+      hostPatchProps(el, key, prev, next);
+    });
+
+    //若果旧的有这个属性，新的没有这个属性: 删除这个属性
+    Object.entries(oldProps).forEach(([key, prev]: [any, any]) => {
+      if ((key in newProps)) {
+        return
+      }
+
+      hostPatchProps(el, key, prev, null);
+    });
+  }
+
+  function patchElement(oldVNode: any, currentVNode: any, container: any) {
+
+    const el = currentVNode.el = oldVNode.el;
+    const oldProps = oldVNode.props || {};
+    const newProps = currentVNode.props || {};
+
+    patchProps(el, oldProps, newProps);
+  }
+
   function processElement(oldVNode: any, currentVNode: any, container: any) {
     if (oldVNode === null) { //是第一次加载
       mountElement(currentVNode, container);
@@ -116,10 +156,30 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     }
 
     //TODO: 更新
+    //更新 
+    // 比对属性
+    patchElement(oldVNode, currentVNode, container)
+
+  }
+
+  function isSameVNode(oldVNode: any, currentVNode: any) {
+    return oldVNode.type === currentVNode.type && oldVNode.key === currentVNode.key;
+  }
+
+  function unmount(vNode: any) {
+    hostRemove(vNode.el);
   }
 
   const patch = (oldVNode: any, currentVNode: any, container: any) => { //比对
     //针对不同的类型 组件/元素/文本
+    //比对 1. 判断是不是同一个元素 2. 若是同一个元素（1. 比对props、children）
+    //判断是不是同一个元素
+
+    if (oldVNode && !isSameVNode(oldVNode, currentVNode)) {
+      unmount(oldVNode);
+      oldVNode = null;
+    }
+
     let { shapeFlag, type } = currentVNode;
 
     if (type === TEXT) {

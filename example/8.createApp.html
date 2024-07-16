@@ -13,7 +13,7 @@
 
       let App = {
         setup(props, context){
-          const user = reactive({name: 'zs', age: 20});
+          const user = reactive({name: 'zs', age: 20, isFlag: false});
           
           console.log('setup', props, context)
 
@@ -21,14 +21,22 @@
             user.name='Alisa'
           }
 
-          // return {
-          //   user
-          // };
+          setTimeout(() => {
+            user.isFlag = true;
+          }, 2000);
+
+          return {
+            user
+          };
 
           return () => h('div', {style: {color: 'red'}, onClick: changeName }, ['hello ', user.name]);
         },
         render(proxy) {
-          console.log('render', proxy, this);
+          console.log('render', proxy, this, proxy.user.isFlag);
+
+          if (proxy.user.isFlag) {
+            return h('div', {style: {color: 'blue', fontWeight: 700} }, '变更');
+          }
 
           return h('div', {style: {color: 'red'} }, ['hello  ', proxy.user.name, h('div', {style: {color: 'black'}}, 'haha')]);
         }

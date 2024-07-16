@@ -13,6 +13,7 @@ export function createComponentInstance(vNode: any) {
     proxy: {},
     data: {},
     render: false,
+    subTree: null,
     isMounted: false, //是否挂载
   }
 
