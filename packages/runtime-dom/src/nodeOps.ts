@@ -12,8 +12,8 @@ export const nodeOps = {
       parentNode.removeChild(child);
     }
   },
-  insert(child: Element, parent: Element, ancher = null) {
-    parent.insertBefore(child, ancher); //ancher = null 相当于 appendchild
+  insert(child: Element, parent: Element, anchor = null) {
+    parent.insertBefore(child, anchor); //anchor = null 相当于 appendchild
   },
   querySelector(select: string) {
     return document.querySelector(select);

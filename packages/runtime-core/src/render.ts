@@ -89,7 +89,7 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     })
   }
 
-  const mountElement = (vNode: any, container: any) => {
+  const mountElement = (vNode: any, container: any, anchor: any) => {
     // 递归 渲染 h('div', {}, [h('div)]) => dom操作 => 放到对应位置
     const { props, shapeFlag, type, children } = vNode;
     //创建真实元素
@@ -111,7 +111,7 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     }
 
     //放到对应的位置
-    hostInsert(el, container);
+    hostInsert(el, container, anchor);
   };
 
   function patchProps(el: any, oldProps: any, newProps: any) {
@@ -140,6 +140,175 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     });
   }
 
+  function patchKeyedChildren(c1: Array<any>, c2: Array<any>, el: any) {
+    let i = 0; //比对的位置
+    const l2 = c2.length
+    let e1 = c1.length - 1;
+    let e2 = l2 - 1;
+
+    // 1. 同一位置比对（两个元素不同 -> 停止比对）2. 哪个数组没有了 -> 停止比对
+    // 1. sync from start：从头部开始比对  // (a b) c
+    // (a b) d e
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i];
+      const n2 = c2[i];
+
+      if (isSameVNodeType(n1, n2)) { //元素相同，进行比对
+        patch(n1, n2, el);
+      } else {
+        break;
+      }
+
+      i++;
+    }
+
+    // 2. sync form end
+    // a (b c)
+    // d e (b c)
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1];
+      const n2 = c2[e2];
+
+      if (isSameVNodeType(n1, n2)) { //元素相同，进行比对
+        patch(n1, n2, el);
+      } else {
+        break;
+      }
+
+      e1--;
+      e2--;
+    }
+
+    //特殊的情况 1. 旧的数据少，新的数据多 2. 新的数据多，旧的数据少
+    // 3. common sequence + mount
+    // (a b)
+    // (a b) c d
+    // i = 2, e1 = 1, e2 = 2
+    // (a b)
+    // c d (a b)
+    // i = 0, e1 = -1, e2 = 0
+    if (i > e1) { //旧的数据少，新的数据多
+      if (i <= e2) {
+        //添加数据： 在头部还是在尾部添加
+        const nextPos = e2 + 1;
+        const anchor = nextPos < l2 ? c2[nextPos].el : null;
+        while (i <= e2) { //遍历
+          patch(null, c2[i++], el, anchor);
+        }
+      }
+
+      return;
+    }
+
+    // 4. common sequence + unmount
+    // (a b) c
+    // (a b)
+    // i = 2, e1 = 2, e2 = 1
+    // a (b c)
+    // (b c)
+    // i = 0, e1 = 0, e2 = -1
+    if (i > e2) {//旧的比新的多
+      //删除数据
+      while (i <= e1) {
+        unmount(c1[i++]);
+      }
+
+      return;
+    }
+
+    // 5. unknown sequence 乱序
+    // [i ... e1 + 1]: a b [c d e] f g
+    // [i ... e2 + 1]: a b [e d c h] f g
+    // i = 2, e1 = 4, e2 = 5
+    // 解决思路： 为新的乱序的child创建一个映射表，（2）在用旧的乱序的诗句去新的表中找 如果有旧复用 没有旧删除
+
+    const s1 = i; // prev starting index
+    const s2 = i; // next starting index
+
+
+    // 5.1 build key:index map for newChildren
+    const keyToNewIndexMap = new Map();
+
+    for (let i = s2; i <= e2; i++) {
+      const childVNode = c2[i];
+      keyToNewIndexMap.set(childVNode.key, i);
+    }
+
+    //解决乱序比对的问题：位置不对、新的元素没有创建
+    const toBePatched = e2 - s2 + 1; //乱序的个数
+    //创建数组  Map<newIndex, oldIndex>
+    const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
+
+    // 5.2 循环遍历旧子节点，并尝试更新的匹配节点，并删除不再存在的节点
+    for (let i = s1; i <= e1; i++) {
+      const oldChildVNode = c1[i];
+      let newIndex = keyToNewIndexMap.get(oldChildVNode.key);
+      if (newIndex === undefined) {
+        unmount(oldChildVNode);
+        continue;
+      }
+
+      //旧的和新的关系 索引关系
+      newIndexToOldIndexMap[newIndex - s2] = i + 1; //就是老的索引位置(新的数据在旧的数据里面的索引位置 0表示没有)
+      patch(oldChildVNode, c2[newIndex], el);
+    }
+
+    // 5.3 move and mount
+    //移动结点并且添加新增的元素 方法 倒序
+    for (let i = toBePatched - 1; i >= 0; i--) {
+      let currentIndex = i + s2;
+      const currentChild = c2[currentIndex];
+
+      //添加 位置
+      const anchor = currentIndex + 1 < c2.length ? c2[currentIndex + 1].el : null;
+      if (newIndexToOldIndexMap[i] === 0) {
+        patch(null, currentChild, el, anchor);
+
+        continue;
+      }
+
+      hostInsert(currentChild.el, el, anchor)
+    }
+  }
+
+  //比对child
+  function patchChild(oldVNode: any, currentVNode: any, el: any) {
+    const oldChildren = oldVNode.children;
+    const nextChildren = currentVNode.children;
+
+    if (oldChildren === nextChildren) {
+      return;
+    }
+
+    //儿子之间 4种
+    // 1. 旧的有儿子 新的没有儿子 2. 新的有儿子，旧的没有儿子 3. 儿子都是文本 4. 都有儿子，并且这些儿子是数组的
+    //儿子都是文本
+    const prevShapeFlag = oldVNode.shapeFlag;
+    const nextShapeFlag = currentVNode.shapeFlag;
+
+    if (nextShapeFlag & ShapeFlags.TEXT_CHILDREN) { //新的是文本或者null：直接替换
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        hostRemove(oldChildren);
+      }
+
+      if (oldChildren !== nextChildren) {
+        hostSetElementText(el, nextChildren);
+      }
+
+      return;
+    }
+
+    if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) { //旧的是数组， 新的也是数组
+      patchKeyedChildren(oldVNode.children, currentVNode.children, el);
+      return;
+    }
+
+    // prev children was text OR null
+    // new children is array OR null
+    hostSetElementText(el, '');
+    mountChildren(el, currentVNode.children);
+  }
+
   function patchElement(oldVNode: any, currentVNode: any, container: any) {
 
     const el = currentVNode.el = oldVNode.el;
@@ -147,11 +316,12 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     const newProps = currentVNode.props || {};
 
     patchProps(el, oldProps, newProps);
+    patchChild(oldVNode, currentVNode, el);
   }
 
-  function processElement(oldVNode: any, currentVNode: any, container: any) {
+  function processElement(oldVNode: any, currentVNode: any, container: any, anchor: any) {
     if (oldVNode === null) { //是第一次加载
-      mountElement(currentVNode, container);
+      mountElement(currentVNode, container, anchor);
       return;
     }
 
@@ -159,10 +329,9 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     //更新 
     // 比对属性
     patchElement(oldVNode, currentVNode, container)
-
   }
 
-  function isSameVNode(oldVNode: any, currentVNode: any) {
+  function isSameVNodeType(oldVNode: any, currentVNode: any) {
     return oldVNode.type === currentVNode.type && oldVNode.key === currentVNode.key;
   }
 
@@ -170,12 +339,12 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     hostRemove(vNode.el);
   }
 
-  const patch = (oldVNode: any, currentVNode: any, container: any) => { //比对
+  const patch = (oldVNode: any, currentVNode: any, container: any, anchor: any = null) => { //比对
     //针对不同的类型 组件/元素/文本
     //比对 1. 判断是不是同一个元素 2. 若是同一个元素（1. 比对props、children）
     //判断是不是同一个元素
 
-    if (oldVNode && !isSameVNode(oldVNode, currentVNode)) {
+    if (oldVNode && !isSameVNodeType(oldVNode, currentVNode)) {
       unmount(oldVNode);
       oldVNode = null;
     }
@@ -183,13 +352,14 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
     let { shapeFlag, type } = currentVNode;
 
     if (type === TEXT) {
+      //处理文本
       processText(oldVNode, currentVNode, container);
       return;
     }
 
     if (shapeFlag & ShapeFlags.ELEMENT) {
       // 处理元素
-      processElement(oldVNode, currentVNode, container);
+      processElement(oldVNode, currentVNode, container, anchor);
       return;
     }
 

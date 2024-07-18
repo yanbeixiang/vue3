@@ -23,6 +23,6 @@ export function patchProps(el: HTMLBaseElement, key: string, preValue: any, next
         break;
       }
 
-      patchAttr(el, preValue, nextValue);
+      patchAttr(el, key, nextValue);
   }
 }

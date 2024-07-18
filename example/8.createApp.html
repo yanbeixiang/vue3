@@ -35,10 +35,25 @@
           console.log('render', proxy, this, proxy.user.isFlag);
 
           if (proxy.user.isFlag) {
-            return h('div', {style: {color: 'blue', fontWeight: 700} }, '变更');
+            return  h('div', {style: {color: 'red'} }, [
+              h('p', {key: 'B'}, 'B'),
+              h('p', {key: 'A'}, 'A'),
+              h('p', {key: 'F'}, 'F'),
+              h('p', {key: 'D'}, 'D'),
+              h('p', {key: 'C'}, 'C'),
+              h('p', {key: 'H'}, 'H'),
+            ]);
           }
 
-          return h('div', {style: {color: 'red'} }, ['hello  ', proxy.user.name, h('div', {style: {color: 'black'}}, 'haha')]);
+          return h('div', {style: {color: 'blue', fontWeight: 700} }, [
+              h('p', {key: 'A'}, 'A'),
+              h('p', {key: 'B'}, 'B'),
+              h('p', {key: 'C'}, 'C'),
+              h('p', {key: 'D'}, 'D'),
+              h('p', {key: 'test'}, 'test'),
+            ]);
+
+          // return h('div', {style: {color: 'red'} }, ['hello  ', proxy.user.name, h('div', {style: {color: 'black'}}, 'haha')]);
         }
       }
 
