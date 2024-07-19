@@ -1,6 +1,14 @@
 import { isFunction, isObject, ShapeFlags } from "@vue/shared";
 import { componentPublicInstance } from "./componentPublicInstance";
 
+export function getCurrentInstance() {
+  return currentInstance;
+}
+
+export function setCurrentInstance(target: any) {
+  currentInstance = target;
+}
+
 //组件 实例
 export function createComponentInstance(vNode: any) {
   const instance = { //组件 props attrs slots
@@ -38,6 +46,8 @@ export function setupComponent(instance: any) {
 }
 
 //处理setup
+export let currentInstance = null;
+
 function setupStateComponent(instance: any) {
   //代理
   instance.proxy = new Proxy(instance.ctx, componentPublicInstance as any)
@@ -54,9 +64,13 @@ function setupStateComponent(instance: any) {
     return;
   }
 
+  //在setup之前创建全局的currentInstance
+  currentInstance = instance;
   //处理参数
   const setupContext = createContext(instance);
   const setupResult = setup(instance.props, setupContext); //setup返回值 1. 对象（值） 2. 函数（render）
+  //setup执行完毕
+  currentInstance = null;
 
   handlerSetupResult(instance, setupResult);
 }

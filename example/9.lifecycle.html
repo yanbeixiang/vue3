@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reactive</title>
+  </head>
+  <body>
+    <div id="app">test</div>
+    <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+    <script>
+      let {
+        createApp, 
+        h,
+        reactive,
+        onBeforeMount,
+        onMounted,
+        onBeforeUpdate,
+        onUpdated,
+        getCurrentInstance,
+      } = vueRuntimeDom;
+
+      const App = {
+        setup() {
+          const state = reactive({ num: 3 });
+
+          setTimeout(() => {
+            state.num = 1;
+          }, 1000);
+
+          onBeforeMount(() => {
+            console.log('加载之前');
+          });
+
+          onMounted(() => {
+            console.log(this); // windown
+            //写项目的时候要用到这个当前组件的实例 getCurrentInstance()
+            console.log('加载之后', instance);
+          });
+
+          onBeforeUpdate(() => {
+            console.log('数据更新之前');
+          });
+
+          onUpdated(() => {
+            console.log('数据更新之后');
+          });
+
+          
+          let instance = getCurrentInstance();
+
+          console.log(1111, instance);
+
+          return () => h('div', {style: {color: 'red'}}, state.num)
+        }
+      }
+
+      createApp(App, {name: 'init-zs'}).mount('#app');
+    </script>
+
+  </body>
+</html>
