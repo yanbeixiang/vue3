@@ -36,12 +36,12 @@
 
           if (proxy.user.isFlag) {
             return  h('div', {style: {color: 'red'} }, [
-              h('p', {key: 'B'}, 'B'),
               h('p', {key: 'A'}, 'A'),
-              h('p', {key: 'F'}, 'F'),
-              h('p', {key: 'D'}, 'D'),
+              h('p', {key: 'B'}, 'B'),
+              h('p', {key: '1'}, '1'),
               h('p', {key: 'C'}, 'C'),
-              h('p', {key: 'H'}, 'H'),
+              h('p', {key: 'D'}, 'D'),
+              h('p', {key: '2'}, '2'),
             ]);
           }
 
@@ -50,7 +50,6 @@
               h('p', {key: 'B'}, 'B'),
               h('p', {key: 'C'}, 'C'),
               h('p', {key: 'D'}, 'D'),
-              h('p', {key: 'test'}, 'test'),
             ]);
 
           // return h('div', {style: {color: 'red'} }, ['hello  ', proxy.user.name, h('div', {style: {color: 'black'}}, 'haha')]);

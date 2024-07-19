@@ -255,6 +255,10 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
 
     // 5.3 move and mount
     //移动结点并且添加新增的元素 方法 倒序
+
+    const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap);
+    let j = increasingNewIndexSequence.length - 1;
+
     for (let i = toBePatched - 1; i >= 0; i--) {
       let currentIndex = i + s2;
       const currentChild = c2[currentIndex];
@@ -267,7 +271,13 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
         continue;
       }
 
-      hostInsert(currentChild.el, el, anchor)
+      if (i !== increasingNewIndexSequence[j]) { //移动
+        hostInsert(currentChild.el, el, anchor)
+        continue;
+      }
+
+      //不用动
+      j--;
     }
   }
 
@@ -383,3 +393,46 @@ export function createRenderer(rendererOption: any) { //实现渲染 vue3 => vno
 
 // 总结：
 // 1. 创建 createApp方法 => runtime-dom 但是渲染组件 (运行在不同的平台)
+
+
+// https://en.wikipedia.org/wiki/Longest_increasing_subsequence
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice()
+  const result = [0]
+  let i, j, u, v, c
+  const len = arr.length
+  for (i = 0; i < len; i++) {
+    const arrI = arr[i]
+    if (arrI !== 0) {
+      j = result[result.length - 1]
+      if (arr[j] < arrI) {
+        p[i] = j
+        result.push(i)
+        continue
+      }
+      u = 0
+      v = result.length - 1
+      while (u < v) {
+        c = (u + v) >> 1
+        if (arr[result[c]] < arrI) {
+          u = c + 1
+        } else {
+          v = c
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1]
+        }
+        result[u] = i
+      }
+    }
+  }
+  u = result.length
+  v = result[u - 1]
+  while (u-- > 0) {
+    result[u] = v
+    v = p[v]
+  }
+  return result
+}
